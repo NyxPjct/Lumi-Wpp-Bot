@@ -19,6 +19,18 @@ Atendimento pelo WhatsApp para óticas. Cada ótica conectará seu próprio núm
 
 **É um ambiente de desenvolvimento, não um MVP de produção.** O WhatsApp ainda não está conectado. Orçamentos atuais são de teste, sem cliente ou receita associados. Integração real com WhatsApp, lembretes, catálogo de armações, conversas persistidas e armazenamento de receitas seguem pendentes. Use dados fictícios e credenciais de teste.
 
+## Abrir no Windows sem Docker
+
+Para ver a Lumi no seu próprio computador, com Node.js 22 ou mais recente:
+
+1. [Baixe o ZIP do projeto](https://github.com/NyxPjct/Lumi-Wpp-Bot/archive/refs/heads/main.zip) e extraia para uma pasta nova.
+2. Abra a pasta `Lumi-Wpp-Bot-main` e dê dois cliques em **Abrir-Lumi-Demo.cmd**.
+3. Aguarde a instalação das dependências na primeira execução. O iniciador abre o navegador quando confirma que a Lumi está respondendo.
+
+Ele usa uma porta livre entre 3010 e 3020, preservando outros aplicativos. Mantenha a janela aberta. Este modo oferece interface, configuração, FAQ e orçamento de demonstração; **pedidos e agenda com persistência exigem Docker + Supabase local**. Não é uma publicação do aplicativo na internet.
+
+Veja o [guia de acesso e demonstração no Windows](docs/testar-no-windows.md). Em um terminal, após `npm ci`, o mesmo iniciador pode ser usado com `npm run demo`.
+
 ## Desenvolvimento com Supabase local
 
 Requer Node.js 22+, npm e Docker em execução (Linux, macOS ou WSL2). No ambiente da nuvem, use o checkout existente; não é necessário criar worktrees.

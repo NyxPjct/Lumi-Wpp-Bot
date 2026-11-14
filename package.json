@@ -23,7 +23,8 @@
     "test:e2e:demo": "node --test apps/painel/tests/onboarding.test.cjs apps/painel/tests/simulator.test.cjs",
     "dev:demo": "NEXT_PUBLIC_LUMI_MODE=demo npm run dev",
     "db:migrate": "node scripts/local-supabase.mjs migrate",
-    "test:db:restart": "node --test supabase/tests/restart.mjs"
+    "test:db:restart": "node --test supabase/tests/restart.mjs",
+    "demo": "node scripts/start-demo.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",

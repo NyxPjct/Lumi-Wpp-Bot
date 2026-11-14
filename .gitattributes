@@ -1,0 +1,2 @@
+# Preserve Windows command-file line endings in ZIP downloads as well as clones.
+Abrir-Lumi-Demo.cmd -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
