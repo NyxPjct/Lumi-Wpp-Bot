@@ -9,11 +9,12 @@ Atendimento pelo WhatsApp para óticas. Cada ótica conectará seu próprio núm
 - RLS para isolar as configurações de cada ótica; criação transacional da ótica e do vínculo com o proprietário.
 - Tabela de preços editável, cálculo de orçamento por tipo de lente e tratamentos, com valores em centavos.
 - Lista de orçamentos de teste persistidos, filtro por status e atualização do acompanhamento.
+- Agenda do painel: criar e retirar horários, reservar, cancelar e remarcar agendamentos de teste.
 - Painel responsivo com simulador: consentimento demonstrativo, menu, FAQ personalizada e transferência para humano.
 - Esqueleto do webhook com assinatura HMAC, verificação Meta e filtro de números autorizados.
 - Modo de demonstração independente do banco, disponível com `npm run dev:demo`.
 
-**É um ambiente de desenvolvimento, não um MVP de produção.** O WhatsApp ainda não está conectado. Orçamentos atuais são de teste, sem cliente ou receita associados. Agenda, pedidos, conversas persistidas e armazenamento de receitas seguem pendentes. Use dados fictícios e credenciais de teste.
+**É um ambiente de desenvolvimento, não um MVP de produção.** O WhatsApp ainda não está conectado. Orçamentos atuais são de teste, sem cliente ou receita associados. Agendamento pela conversa, lembretes pelo WhatsApp, pedidos, conversas persistidas e armazenamento de receitas seguem pendentes. Use dados fictícios e credenciais de teste.
 
 ## Desenvolvimento com Supabase local
 
@@ -60,3 +61,7 @@ Abra **Tabela de preços**, cadastre as faixas e teste a opção 1 do simulador.
 ## Validação automática
 
 O GitHub Actions está configurado para executar testes de lógica/webhook, checagem de tipos e build demonstrativo em pushes e pull requests. Os testes de banco e navegador são executados separadamente com a stack local, conforme os guias acima.
+
+## Agenda da ótica
+
+Em **Agenda**, crie horários de exame, ajuste ou retirada em horário de Brasília. Reserve usando nomes fictícios e teste cancelamento e remarcação. O banco impede sobreposição de horários e dupla reserva. Esta etapa funciona apenas no painel com Supabase local; não envia lembretes nem agenda pela conversa. Veja o [guia da agenda](docs/agenda.md).

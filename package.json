@@ -15,7 +15,7 @@
     "build": "npm run build --workspace=@lumi/painel",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test apps/api/tests/*.test.ts packages/shared/tests/*.test.ts scripts/tests/*.test.cjs",
-    "test:e2e": "node --test apps/painel/tests/auth.test.cjs apps/painel/tests/quotes.test.cjs",
+    "test:e2e": "node --test apps/painel/tests/auth.test.cjs apps/painel/tests/quotes.test.cjs apps/painel/tests/agenda.test.cjs",
     "db:start": "node scripts/local-supabase.mjs start",
     "db:stop": "node scripts/local-supabase.mjs stop",
     "db:configure": "node scripts/local-supabase.mjs configure",

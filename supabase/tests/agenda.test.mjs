@@ -1,0 +1,76 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {randomUUID,randomBytes} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import {createClient} from '@supabase/supabase-js';
+const root=fileURLToPath(new URL('../../',import.meta.url));
+const exec=promisify(execFile);
+test('agenda real: concorrência, remarcação atômica, cancelamento, permissões e isolamento',async()=>{
+ const {stdout}=await exec(path.join(root,'node_modules/.bin/supabase'),['status','-o','json'],{cwd:root,env:{...process.env,SUPABASE_HOME:path.join(root,'.local/supabase-home')}});
+ const config=JSON.parse(stdout);assert.ok(['127.0.0.1','localhost'].includes(new URL(config.API_URL).hostname));
+ const options={auth:{persistSession:false,autoRefreshToken:false}};
+ const client=()=>createClient(config.API_URL,config.ANON_KEY,options);
+ const admin=createClient(config.API_URL,config.SERVICE_ROLE_KEY,options);const users=[];const optics=[];
+ async function account(){
+  const db=client();const result=await db.auth.signUp({email:`agenda-${randomUUID()}@example.test`,password:randomBytes(24).toString('base64url')});
+  assert.equal(result.error,null);users.push(result.data.user.id);
+  const created=await db.rpc('create_optic',{p_name:'Ótica agenda teste',p_address:'Rua de Teste, 120',p_hours:'Das 9h às 18h',p_payments:'Pix e cartões',p_delivery:'Confirme com atendente'});
+  assert.equal(created.error,null);optics.push(created.data);return{db,id:created.data,userId:result.data.user.id};
+ }
+ const base=new Date(Date.now()+48*3600_000);base.setUTCHours(15,0,0,0);
+ const at=minutes=>new Date(base.getTime()+minutes*60000).toISOString();
+ const slotArgs=(optic,start)=>({p_optic_id:optic,p_starts_at:start,p_duration_minutes:30,p_service:'exam'});
+ const bookArgs=(optic,slot,name='Cliente fictício')=>({p_optic_id:optic,p_slot_id:slot,p_customer_name:name,p_request_id:randomUUID()});
+ try{
+  const a=await account();const b=await account();
+  for(const changed of [{p_starts_at:new Date(Date.now()-3600000).toISOString()},{p_starts_at:new Date(Date.now()+366*86400000).toISOString()},{p_duration_minutes:20},{p_service:'unknown'}])assert.ok((await a.db.rpc('create_appointment_slot',{...slotArgs(a.id,at(0)),...changed})).error);
+  const races=await Promise.all([a.db.rpc('create_appointment_slot',slotArgs(a.id,at(0))),a.db.rpc('create_appointment_slot',slotArgs(a.id,at(15)))]);
+  assert.equal(races.filter(r=>!r.error).length,1,'Horários sobrepostos simultâneos não podem ser criados');
+  const first=races.find(r=>!r.error).data;
+  const second=await a.db.rpc('create_appointment_slot',slotArgs(a.id,at(60)));assert.equal(second.error,null);
+  const occupied=await a.db.rpc('create_appointment_slot',slotArgs(a.id,at(120)));assert.equal(occupied.error,null);
+  const fourth=await a.db.rpc('create_appointment_slot',slotArgs(a.id,at(180)));assert.equal(fourth.error,null);
+  const foreign=await b.db.rpc('create_appointment_slot',slotArgs(b.id,at(0)));assert.equal(foreign.error,null);
+  const requestA=bookArgs(a.id,first.id,'Cliente A');const requestB=bookArgs(a.id,first.id,'Cliente B');
+  const reservations=await Promise.all([a.db.rpc('book_appointment',requestA),a.db.rpc('book_appointment',requestB)]);
+  assert.equal(reservations.filter(r=>!r.error).length,1,'A mesma vaga não pode ter duas reservas');
+  const winner=reservations.findIndex(r=>!r.error);const booking=reservations[winner].data;const original=winner===0?requestA:requestB;
+  const retry=await a.db.rpc('book_appointment',original);assert.equal(retry.error,null);assert.equal(retry.data.id,booking.id);
+  assert.equal((await a.db.from('appointments').select('id')).data.length,1);
+  assert.ok((await a.db.rpc('book_appointment',{...original,p_customer_name:'Outra pessoa fictícia'})).error);
+  assert.ok((await a.db.rpc('cancel_appointment_slot',{p_optic_id:a.id,p_slot_id:first.id})).error,'Horário reservado não pode ser retirado antes de cancelar a reserva');
+  const taken=await a.db.rpc('book_appointment',bookArgs(a.id,occupied.data.id));assert.equal(taken.error,null);
+  assert.ok((await a.db.rpc('reschedule_appointment',{p_optic_id:a.id,p_appointment_id:booking.id,p_slot_id:occupied.data.id})).error);
+  assert.equal((await a.db.from('appointments').select('slot_id').eq('id',booking.id).single()).data.slot_id,first.id,'Remarcação que falha deve preservar a reserva original');
+  assert.ok((await a.db.rpc('reschedule_appointment',{p_optic_id:a.id,p_appointment_id:booking.id,p_slot_id:foreign.data.id})).error);
+  const moved=await a.db.rpc('reschedule_appointment',{p_optic_id:a.id,p_appointment_id:booking.id,p_slot_id:second.data.id});
+  assert.equal(moved.error,null);assert.equal(moved.data.id,booking.id);
+  const agenda=await a.db.rpc('get_agenda',{p_optic_id:a.id});assert.equal(agenda.error,null);
+  assert.equal(agenda.data.slots.find(s=>s.id===first.id).is_booked,false);assert.equal(agenda.data.slots.find(s=>s.id===second.data.id).is_booked,true);
+  assert.equal((await a.db.rpc('book_appointment',bookArgs(a.id,first.id))).error,null,'Remarcar libera a vaga anterior');
+  const cancelArgs={p_optic_id:a.id,p_appointment_id:booking.id};
+  assert.equal((await a.db.rpc('cancel_appointment',cancelArgs)).error,null);assert.equal((await a.db.rpc('cancel_appointment',cancelArgs)).data.status,'cancelled');
+  const retired=await a.db.rpc('cancel_appointment_slot',{p_optic_id:a.id,p_slot_id:second.data.id});assert.equal(retired.error,null);
+  assert.ok((await a.db.rpc('book_appointment',bookArgs(a.id,second.data.id))).error,'Horário retirado não pode receber nova reserva');
+  assert.ok((await a.db.rpc('reschedule_appointment',{p_optic_id:a.id,p_appointment_id:booking.id,p_slot_id:fourth.data.id})).error,'Reserva cancelada não pode ser remarcada');
+  assert.deepEqual((await b.db.from('appointment_slots').select('id').eq('optic_id',a.id)).data,[]);
+  assert.deepEqual((await b.db.from('appointments').select('id').eq('id',booking.id)).data,[]);
+  assert.ok((await b.db.rpc('get_agenda',{p_optic_id:a.id})).error);
+  assert.ok((await b.db.rpc('cancel_appointment',{p_optic_id:a.id,p_appointment_id:booking.id})).error);
+  assert.ok((await a.db.rpc('book_appointment',bookArgs(a.id,foreign.data.id))).error);
+  assert.ok((await a.db.from('appointments').update({status:'confirmed'}).eq('id',booking.id)).error);
+  assert.ok((await a.db.from('appointment_slots').update({starts_at:at(0)}).eq('id',fourth.data.id)).error);
+  assert.ok((await a.db.from('appointments').insert({optic_id:a.id,slot_id:fourth.data.id})).error);
+  assert.equal((await admin.from('optic_memberships').update({role:'attendant'}).eq('user_id',a.userId)).error,null);
+  assert.ok((await a.db.rpc('create_appointment_slot',slotArgs(a.id,at(240)))).error);
+  assert.ok((await a.db.rpc('cancel_appointment_slot',{p_optic_id:a.id,p_slot_id:fourth.data.id})).error);
+  assert.equal((await a.db.rpc('book_appointment',bookArgs(a.id,fourth.data.id))).error,null,'Atendente vinculado pode reservar uma vaga livre');
+  assert.ok((await client().rpc('get_agenda',{p_optic_id:a.id})).error);assert.ok((await client().from('appointments').select('id')).error);
+ }finally{
+  if(optics.length)assert.equal((await admin.from('optics').delete().in('id',optics)).error,null);
+  for(const id of users)assert.equal((await admin.auth.admin.deleteUser(id)).error,null);
+ }
+});

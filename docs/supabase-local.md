@@ -41,8 +41,9 @@ Esta primeira versão permite uma ótica por conta. Criar a ótica e associar o 
 - API local em 54321, PostgreSQL em 54322 e caixa de e-mail de teste em 54324.
 - Auth, PostgREST e gateway habilitados.
 - Studio, Storage, Realtime, Edge Runtime e Analytics desativados porque não são necessários nesta etapa.
-- Tabelas `optics`, `optic_memberships`, `lens_prices`, `treatment_prices` e `quotes` protegidas por RLS.
+- Tabelas `optics`, `optic_memberships`, `lens_prices`, `treatment_prices`, `quotes`, `appointment_slots` e `appointments` protegidas por RLS.
 - Preços editados pelo proprietário e orçamentos de teste recalculados no banco, com reenvio idempotente. Veja [orçamentos](orcamentos.md).
+- Agenda do painel com vagas e reservas de teste, cancelamento/remarcação e validação de concorrência. Veja [agenda](agenda.md).
 - Criação de vínculo exclusivamente pela função autenticada `create_optic`, que usa a identidade da sessão. O navegador não escolhe o tenant.
 - Usuários anônimos não têm acesso às configurações; proprietários só podem editar as colunas permitidas de sua ótica. Novas políticas serão necessárias quando o gerenciamento de atendentes for implementado.
 
@@ -66,7 +67,7 @@ Com o painel também iniciado em modo Supabase:
 npm run test:e2e
 ```
 
-O teste de banco exercita cadastro, login, persistência, validação SQL, tentativa de acesso/edição entre contas e proibição de manipular vínculos. Os testes de navegador exercitam cadastro real, configuração, FAQ, logout/login, senha incorreta, recarga, edição, largura mobile e o fluxo de preços/orçamentos com status persistido.
+O teste de banco exercita cadastro, login, persistência, validação SQL, tentativa de acesso/edição entre contas e proibição de manipular vínculos. Os testes de agenda validam sobreposição, disputa por vagas, remarcação que falha sem perder a reserva, permissões e conversão de fuso. Os testes de navegador exercitam cadastro real, configuração, FAQ, logout/login, senha incorreta, recarga, edição, largura mobile e o fluxo de preços/orçamentos com status persistido.
 
 ## Parar e retomar
 

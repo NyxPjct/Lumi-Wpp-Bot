@@ -73,3 +73,4 @@ export function transition(current: Conversation, input: string, now = new Date(
   if (conversation.invalidAttempts >= 3) return handoff();
   return respond('Não entendi. Escolha uma opção da lista ou digite menu.');
 }
+export * from './agenda';
