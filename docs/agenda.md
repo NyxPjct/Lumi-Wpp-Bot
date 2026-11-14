@@ -1,6 +1,6 @@
 # Agenda de teste da Lumi
 
-O painel oferece uma agenda por ótica para exames, ajustes e retiradas. Essa entrega funciona no Supabase local e grava somente registros de teste (`is_demo=true`). Não há integração com calendário externo, reserva pela conversa, cliente real associado ou lembrete pelo WhatsApp.
+O painel oferece uma agenda por ótica para exames, ajustes e retiradas. Essa entrega funciona no Supabase local e grava somente registros de teste (`is_demo=true`). O simulador também pode reservar, cancelar e remarcar: veja o [guia da conversa](agenda-conversa.md). Não há integração com calendário externo, cliente real associado ou lembrete pelo WhatsApp.
 
 ## Abrir horários
 
@@ -50,4 +50,4 @@ A migration `202611140003_agenda.sql` cria `appointment_slots` e `appointments`,
 - `npm run test:db`: disputas concorrentes por horários/vagas, remarcação atômica, cancelamento, permissões e isolamento entre óticas.
 - `npm run test:e2e`: fluxo real no painel com navegador em `Asia/Tokyo`, para verificar que a agenda continua usando Brasília, mais persistência e layout mobile.
 
-O fluxo de agendamento pelo bot e os lembretes de utilidade da Meta ficam para uma próxima entrega.
+O agendamento pelo simulador já utiliza essa agenda. A conexão real com o WhatsApp e os lembretes de utilidade da Meta ficam para uma próxima entrega.

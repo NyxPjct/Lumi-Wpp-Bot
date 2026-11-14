@@ -1,14 +1,17 @@
+import {startAgenda,transitionAgenda,type ConversationAgenda,type AgendaFlow,type AgendaCommand} from './agenda-flow';
+export * from './agenda-flow';
 import {lensTypes, treatmentTypes, lensLabels, treatmentLabels, estimateQuote, formatRange, type PriceTable, type LensType, type QuoteEstimate} from './pricing';
 export * from './pricing';
 import {faqForSettings, type BusinessSettings} from './business';
 export * from './business';
-export type State = 'privacidade' | 'menu' | 'faq' | 'quote_lens' | 'quote_treatments' | 'humano' | 'encerrado';
+export type State = 'privacidade' | 'menu' | 'faq' | 'quote_lens' | 'quote_treatments' | 'agenda' | 'humano' | 'encerrado';
 export interface Conversation {
   state: State;
   consentedAt?: string;
   invalidAttempts: number;
   quoteLens?: LensType;
   quoteResult?: QuoteEstimate;
+  agenda?: AgendaFlow;
 }
 export const initialConversation = (): Conversation => ({state: 'privacidade', invalidAttempts: 0});
 export const welcome = 'Olá! Sou a Lumi, assistente da ótica. Para continuar, você autoriza o uso dos seus dados para este atendimento? Responda “aceito” ou “não aceito”. Não envie receitas nesta demonstração.';
@@ -21,7 +24,7 @@ export const faq = [
 export const welcomeForSettings = (settings?: BusinessSettings | null) => settings
   ? `Olá! Sou a Lumi, assistente da ${settings.name}. Para continuar, você autoriza o uso dos seus dados para este atendimento? Responda “aceito” ou “não aceito”. Não envie receitas nesta demonstração.`
   : welcome;
-export function transition(current: Conversation, input: string, now = new Date().toISOString(), settings?: BusinessSettings | null, prices?: PriceTable): {conversation: Conversation; replies: string[]} {
+export function transition(current: Conversation, input: string, now = new Date().toISOString(), settings?: BusinessSettings | null, prices?: PriceTable, agenda?:ConversationAgenda): {conversation: Conversation; replies: string[]; agendaCommand?:AgendaCommand} {
   const conversation = {...current};
   const answers = settings ? faqForSettings(settings) : faq;
   const text = input.trim().toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -38,7 +41,15 @@ export function transition(current: Conversation, input: string, now = new Date(
     if (['nao', 'nao aceito'].includes(text)) {conversation.state = 'encerrado'; return respond('Tudo bem. O atendimento automático foi encerrado. Entre em contato diretamente com a ótica para atendimento humano.');}
     return respond(welcomeForSettings(settings));
   }
-  if (text === 'menu' || text === 'voltar') {conversation.state = 'menu'; conversation.invalidAttempts = 0; delete conversation.quoteLens; delete conversation.quoteResult; return respond(menu);}
+  if (text === 'menu' || text === 'voltar') {conversation.state = 'menu'; conversation.invalidAttempts = 0; delete conversation.quoteLens; delete conversation.quoteResult; delete conversation.agenda; return respond(menu);}
+  if (conversation.state === 'agenda') {
+    const result=transitionAgenda(conversation.agenda??{phase:'home'},input,agenda,now);
+    if(result.exit){conversation.state='menu';delete conversation.agenda;conversation.invalidAttempts=0;return respond(menu);}
+    conversation.agenda=result.flow;
+    if(result.valid)conversation.invalidAttempts=0;
+    else if(++conversation.invalidAttempts>=3)return handoff();
+    return {conversation,replies:result.replies,...result.command?{agendaCommand:result.command}:{}};
+  }
   if (conversation.state === 'quote_lens') {
     if (/^[1-3]$/.test(text)) {
       conversation.quoteLens = lensTypes[Number(text) - 1];
@@ -65,9 +76,14 @@ export function transition(current: Conversation, input: string, now = new Date(
       delete conversation.quoteResult; delete conversation.quoteLens;
       return respond('Vamos estimar o par de lentes. Use somente dados fictícios e não envie receita. Qual tipo deseja?\n' + lensTypes.map((key, i) => `${i + 1}. ${lensLabels[key]}`).join('\n'));
     }
+    if (text === '3') {
+      const result=startAgenda(agenda);conversation.state='agenda';conversation.agenda=result.flow;conversation.invalidAttempts=0;
+      delete conversation.quoteResult;delete conversation.quoteLens;
+      return respond(...result.replies);
+    }
     if (text === '6') return handoff();
     if (text === '5') {conversation.state = 'faq'; conversation.invalidAttempts = 0; return respond(answers.map((item, i) => `${i + 1}. ${item.question}`).join('\n') + '\nDigite menu para voltar.');}
-    if (['2', '3', '4'].includes(text)) {conversation.invalidAttempts = 0; return respond('Este fluxo ainda está em desenvolvimento. Digite 6 para falar com um atendente ou 5 para consultar dúvidas frequentes.');}
+    if (['2', '4'].includes(text)) {conversation.invalidAttempts = 0; return respond('Este fluxo ainda está em desenvolvimento. Digite 6 para falar com um atendente ou 5 para consultar dúvidas frequentes.');}
   }
   conversation.invalidAttempts++;
   if (conversation.invalidAttempts >= 3) return handoff();

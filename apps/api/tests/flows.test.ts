@@ -44,5 +44,5 @@ test('resposta válida zera tentativas inválidas', () => {
   assert.equal(valid.invalidAttempts, 0);
 });
 test('fluxos pendentes não inventam orçamento nem status', () => {
-  for (const text of ['2','3','4']) assert.match(transition(accepted(), text).replies[0], /em desenvolvimento/);
+  for (const text of ['2','4']) assert.match(transition(accepted(), text).replies[0], /em desenvolvimento/);
 });

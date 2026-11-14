@@ -43,7 +43,7 @@ Esta primeira versão permite uma ótica por conta. Criar a ótica e associar o 
 - Studio, Storage, Realtime, Edge Runtime e Analytics desativados porque não são necessários nesta etapa.
 - Tabelas `optics`, `optic_memberships`, `lens_prices`, `treatment_prices`, `quotes`, `appointment_slots` e `appointments` protegidas por RLS.
 - Preços editados pelo proprietário e orçamentos de teste recalculados no banco, com reenvio idempotente. Veja [orçamentos](orcamentos.md).
-- Agenda do painel com vagas e reservas de teste, cancelamento/remarcação e validação de concorrência. Veja [agenda](agenda.md).
+- Agenda do painel e do simulador com vagas reais, reservas de teste, cancelamento/remarcação e validação de concorrência. Veja [agenda](agenda.md) e [conversa](agenda-conversa.md).
 - Criação de vínculo exclusivamente pela função autenticada `create_optic`, que usa a identidade da sessão. O navegador não escolhe o tenant.
 - Usuários anônimos não têm acesso às configurações; proprietários só podem editar as colunas permitidas de sua ótica. Novas políticas serão necessárias quando o gerenciamento de atendentes for implementado.
 
