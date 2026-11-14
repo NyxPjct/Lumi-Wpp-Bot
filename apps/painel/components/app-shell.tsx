@@ -8,7 +8,7 @@ export function AppShell({children}: {children: React.ReactNode}) {
   const path = usePathname();
   const {settings, storageWarning, mode, user, reload} = useDemoSettings();
   const configuring = path === '/configuracao';
-  const title = ({'/':'Simulador','/configuracao':'Configuração da ótica','/precos':'Tabela de preços','/orcamentos':'Orçamentos','/conta':'Minha conta','/agenda':'Agenda'} as Record<string,string>)[path] ?? 'Painel';
+  const title = ({'/':'Simulador','/configuracao':'Configuração da ótica','/precos':'Tabela de preços','/orcamentos':'Orçamentos','/conta':'Minha conta','/agenda':'Agenda','/pedidos':'Pedidos'} as Record<string,string>)[path] ?? 'Painel';
   return <div className="shell">
     <aside>
       <Link className="logo" href="/">✳ <span>Lumi<span className="dot">.</span></span></Link>
@@ -20,13 +20,14 @@ export function AppShell({children}: {children: React.ReactNode}) {
         <Link className={path === '/precos' ? 'active' : ''} aria-current={path === '/precos' ? 'page' : undefined} href="/precos">◇ <span>Tabela de preços</span></Link>
         <Link className={path === '/orcamentos' ? 'active' : ''} aria-current={path === '/orcamentos' ? 'page' : undefined} href="/orcamentos">▤ <span>Orçamentos</span></Link>
         <Link className={path === '/agenda' ? 'active' : ''} aria-current={path === '/agenda' ? 'page' : undefined} href="/agenda">▦ <span>Agenda</span></Link>
+        <Link className={path === '/pedidos' ? 'active' : ''} aria-current={path === '/pedidos' ? 'page' : undefined} href="/pedidos">▣ <span>Pedidos</span></Link>
         <Link className={path === '/conta' ? 'active' : ''} href="/conta">◈ <span>{user ? 'Minha conta' : 'Entrar ou criar conta'}</span></Link>
       </nav>
       <div className="asideBottom"><span className="live"/> Seu próximo atendimento,<br/>com mais clareza.</div>
     </aside>
     <main>
       <header><span>Painel <span className="slash">/</span> {title}</span><span className="badge">{mode === 'supabase' ? 'Supabase local' : 'Dados fictícios'}</span></header>
-      <nav className="mobileNav" aria-label="Navegação móvel"><Link href="/">Simulador</Link><Link href="/configuracao">Configurar minha ótica</Link><Link href="/precos">Preços</Link><Link href="/orcamentos">Orçamentos</Link><Link href="/agenda">Agenda</Link><Link href="/conta">Conta</Link></nav>
+      <nav className="mobileNav" aria-label="Navegação móvel"><Link href="/">Simulador</Link><Link href="/configuracao">Configurar minha ótica</Link><Link href="/precos">Preços</Link><Link href="/orcamentos">Orçamentos</Link><Link href="/agenda">Agenda</Link><Link href="/pedidos">Pedidos</Link><Link href="/conta">Conta</Link></nav>
       {storageWarning && <p className="notice" role="status">{storageWarning}{mode === 'supabase' && user && <button className="textButton" onClick={() => {void reload().catch(() => {});}}>Tentar carregar novamente</button>}</p>}
       {children}
       <footer>Lumi · Feita para cuidar de cada conversa.</footer>

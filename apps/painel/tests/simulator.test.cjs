@@ -41,6 +41,9 @@ test('simulador: consentimento, FAQ, pausa humana e layout mobile', async () => 
     assert.equal(await page.getByRole('button',{name:'Novo agendamento',exact:true}).count(),0);
     await page.getByRole('button',{name:'Menu principal',exact:true}).click();
     await page.getByRole('button',{name:'Orçamento de lentes',exact:true}).waitFor();
+    await page.getByRole('button',{name:'Status do pedido',exact:true}).click();
+    await page.locator('.messages').getByText('A consulta de pedidos exige uma conta e o Supabase local.',{exact:false}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Tentar consultar pedido novamente',exact:true}).count(),0);
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth),true);
     assert.deepEqual(errors,[]);

@@ -1,10 +1,12 @@
+import {normalizeOrderCode,type OrdersAvailability,type OrderLookup} from './orders';
+export * from './orders';
 import {startAgenda,transitionAgenda,type ConversationAgenda,type AgendaFlow,type AgendaCommand} from './agenda-flow';
 export * from './agenda-flow';
 import {lensTypes, treatmentTypes, lensLabels, treatmentLabels, estimateQuote, formatRange, type PriceTable, type LensType, type QuoteEstimate} from './pricing';
 export * from './pricing';
 import {faqForSettings, type BusinessSettings} from './business';
 export * from './business';
-export type State = 'privacidade' | 'menu' | 'faq' | 'quote_lens' | 'quote_treatments' | 'agenda' | 'humano' | 'encerrado';
+export type State = 'privacidade' | 'menu' | 'faq' | 'quote_lens' | 'quote_treatments' | 'agenda' | 'order_code' | 'order_pending' | 'order_retry' | 'humano' | 'encerrado';
 export interface Conversation {
   state: State;
   consentedAt?: string;
@@ -12,6 +14,7 @@ export interface Conversation {
   quoteLens?: LensType;
   quoteResult?: QuoteEstimate;
   agenda?: AgendaFlow;
+  orderCode?: string;
 }
 export const initialConversation = (): Conversation => ({state: 'privacidade', invalidAttempts: 0});
 export const welcome = 'Olá! Sou a Lumi, assistente da ótica. Para continuar, você autoriza o uso dos seus dados para este atendimento? Responda “aceito” ou “não aceito”. Não envie receitas nesta demonstração.';
@@ -24,7 +27,7 @@ export const faq = [
 export const welcomeForSettings = (settings?: BusinessSettings | null) => settings
   ? `Olá! Sou a Lumi, assistente da ${settings.name}. Para continuar, você autoriza o uso dos seus dados para este atendimento? Responda “aceito” ou “não aceito”. Não envie receitas nesta demonstração.`
   : welcome;
-export function transition(current: Conversation, input: string, now = new Date().toISOString(), settings?: BusinessSettings | null, prices?: PriceTable, agenda?:ConversationAgenda): {conversation: Conversation; replies: string[]; agendaCommand?:AgendaCommand} {
+export function transition(current: Conversation, input: string, now = new Date().toISOString(), settings?: BusinessSettings | null, prices?: PriceTable, agenda?:ConversationAgenda,orders?:OrdersAvailability): {conversation: Conversation; replies: string[]; agendaCommand?:AgendaCommand; orderLookup?:OrderLookup} {
   const conversation = {...current};
   const answers = settings ? faqForSettings(settings) : faq;
   const text = input.trim().toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -41,7 +44,17 @@ export function transition(current: Conversation, input: string, now = new Date(
     if (['nao', 'nao aceito'].includes(text)) {conversation.state = 'encerrado'; return respond('Tudo bem. O atendimento automático foi encerrado. Entre em contato diretamente com a ótica para atendimento humano.');}
     return respond(welcomeForSettings(settings));
   }
-  if (text === 'menu' || text === 'voltar') {conversation.state = 'menu'; conversation.invalidAttempts = 0; delete conversation.quoteLens; delete conversation.quoteResult; delete conversation.agenda; return respond(menu);}
+  if (text === 'menu' || text === 'voltar') {conversation.state = 'menu'; conversation.invalidAttempts = 0; delete conversation.quoteLens; delete conversation.quoteResult; delete conversation.agenda; delete conversation.orderCode; return respond(menu);}
+  if (conversation.state.startsWith('order_')) {
+    if(text==='0'){conversation.state='menu';delete conversation.orderCode;conversation.invalidAttempts=0;return respond(menu);}
+    if(conversation.state==='order_pending')return respond('Aguarde a consulta do pedido.');
+    if(conversation.state==='order_retry'&&text==='2'){conversation.state='order_code';delete conversation.orderCode;conversation.invalidAttempts=0;return respond('Informe outro código de pedido de teste. Digite 0 para voltar ao menu.');}
+    const code=conversation.state==='order_retry'&&text==='1'?conversation.orderCode
+      :conversation.state==='order_code'?normalizeOrderCode(input):null;
+    if(code){conversation.state='order_pending';conversation.orderCode=code;conversation.invalidAttempts=0;return {conversation,replies:[],orderLookup:{code}};}
+    if(++conversation.invalidAttempts>=3)return handoff();
+    return respond('Informe um código de 3 a 30 caracteres, com letras, números e hífens, como LUM-001. Digite 0 para voltar ao menu.');
+  }
   if (conversation.state === 'agenda') {
     const result=transitionAgenda(conversation.agenda??{phase:'home'},input,agenda,now);
     if(result.exit){conversation.state='menu';delete conversation.agenda;conversation.invalidAttempts=0;return respond(menu);}
@@ -81,9 +94,14 @@ export function transition(current: Conversation, input: string, now = new Date(
       delete conversation.quoteResult;delete conversation.quoteLens;
       return respond(...result.replies);
     }
+    if(text==='4'){
+      if(orders?.kind!=='available')return respond(orders?.kind==='demo'?'A consulta de pedidos exige uma conta e o Supabase local. A demonstração sem banco não informa status fictícios.':'Configure sua ótica e a conexão com o Supabase para consultar pedidos de teste.',menu);
+      conversation.state='order_code';conversation.invalidAttempts=0;delete conversation.orderCode;
+      return respond('Qual é o código do pedido de teste? Exemplo: LUM-001. Não informe telefone ou dados pessoais.\nDigite 0 para voltar ao menu.');
+    }
     if (text === '6') return handoff();
     if (text === '5') {conversation.state = 'faq'; conversation.invalidAttempts = 0; return respond(answers.map((item, i) => `${i + 1}. ${item.question}`).join('\n') + '\nDigite menu para voltar.');}
-    if (['2', '4'].includes(text)) {conversation.invalidAttempts = 0; return respond('Este fluxo ainda está em desenvolvimento. Digite 6 para falar com um atendente ou 5 para consultar dúvidas frequentes.');}
+    if (['2'].includes(text)) {conversation.invalidAttempts = 0; return respond('Este fluxo ainda está em desenvolvimento. Digite 6 para falar com um atendente ou 5 para consultar dúvidas frequentes.');}
   }
   conversation.invalidAttempts++;
   if (conversation.invalidAttempts >= 3) return handoff();

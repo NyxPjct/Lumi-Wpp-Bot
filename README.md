@@ -11,11 +11,13 @@ Atendimento pelo WhatsApp para óticas. Cada ótica conectará seu próprio núm
 - Lista de orçamentos de teste persistidos, filtro por status e atualização do acompanhamento.
 - Agenda do painel: criar e retirar horários, reservar, cancelar e remarcar agendamentos de teste.
 - Agendamento pelo simulador: consulta de vagas reais, confirmação, cancelamento e remarcação das reservas da sessão de teste.
+- Pedidos de teste: cadastro, produção, pronto para retirar, retirada e consulta de código/status no simulador.
+- Rascunho de aviso de óculos prontos bloqueado para envio, sem mensagens reais.
 - Painel responsivo com simulador: consentimento demonstrativo, menu, FAQ personalizada e transferência para humano.
 - Esqueleto do webhook com assinatura HMAC, verificação Meta e filtro de números autorizados.
 - Modo de demonstração independente do banco, disponível com `npm run dev:demo`.
 
-**É um ambiente de desenvolvimento, não um MVP de produção.** O WhatsApp ainda não está conectado. Orçamentos atuais são de teste, sem cliente ou receita associados. Integração real com WhatsApp, lembretes, pedidos, conversas persistidas e armazenamento de receitas seguem pendentes. Use dados fictícios e credenciais de teste.
+**É um ambiente de desenvolvimento, não um MVP de produção.** O WhatsApp ainda não está conectado. Orçamentos atuais são de teste, sem cliente ou receita associados. Integração real com WhatsApp, lembretes, catálogo de armações, conversas persistidas e armazenamento de receitas seguem pendentes. Use dados fictícios e credenciais de teste.
 
 ## Desenvolvimento com Supabase local
 
@@ -68,3 +70,7 @@ O GitHub Actions está configurado para executar testes de lógica/webhook, chec
 Em **Agenda**, crie horários de exame, ajuste ou retirada em horário de Brasília. Reserve usando nomes fictícios e teste cancelamento e remarcação. O banco impede sobreposição de horários e dupla reserva. O simulador também usa essa agenda, com confirmação no banco e reservas agrupadas por sessão de teste; não envia mensagens ou lembretes. Veja o [guia da agenda](docs/agenda.md).
 
 Para usar a opção **Agendar exame ou ajuste** do simulador, veja o [guia de agendamento pela conversa](docs/agenda-conversa.md).
+
+## Pedidos e óculos prontos
+
+Em **Pedidos**, cadastre um código e um nome fictício. Marque o pedido como pronto e registre a retirada com confirmação. No simulador, use **Status do pedido** para consultar somente código e estado. O rascunho de aviso é bloqueado e nunca é apresentado como enviado. Veja o [guia de pedidos](docs/pedidos.md).

@@ -41,9 +41,10 @@ Esta primeira versão permite uma ótica por conta. Criar a ótica e associar o 
 - API local em 54321, PostgreSQL em 54322 e caixa de e-mail de teste em 54324.
 - Auth, PostgREST e gateway habilitados.
 - Studio, Storage, Realtime, Edge Runtime e Analytics desativados porque não são necessários nesta etapa.
-- Tabelas `optics`, `optic_memberships`, `lens_prices`, `treatment_prices`, `quotes`, `appointment_slots` e `appointments` protegidas por RLS.
+- Tabelas `optics`, `optic_memberships`, `lens_prices`, `treatment_prices`, `quotes`, `appointment_slots`, `appointments`, `orders` e `order_notifications` protegidas por RLS.
 - Preços editados pelo proprietário e orçamentos de teste recalculados no banco, com reenvio idempotente. Veja [orçamentos](orcamentos.md).
 - Agenda do painel e do simulador com vagas reais, reservas de teste, cancelamento/remarcação e validação de concorrência. Veja [agenda](agenda.md) e [conversa](agenda-conversa.md).
+- Pedidos fictícios com consulta mínima de status e rascunhos de aviso bloqueados, sem envio real. Veja [pedidos](pedidos.md).
 - Criação de vínculo exclusivamente pela função autenticada `create_optic`, que usa a identidade da sessão. O navegador não escolhe o tenant.
 - Usuários anônimos não têm acesso às configurações; proprietários só podem editar as colunas permitidas de sua ótica. Novas políticas serão necessárias quando o gerenciamento de atendentes for implementado.
 
