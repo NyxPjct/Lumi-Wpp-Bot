@@ -1,0 +1,42 @@
+const {chromium} = require('playwright-core');
+const assert = require('node:assert/strict');
+const {test} = require('node:test');
+test('simulador: consentimento, FAQ, pausa humana e layout mobile', async () => {
+  const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || '/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+  try {
+    const page = await browser.newPage({viewport:{width:1440,height:1000}});
+    const errors=[]; page.on('pageerror', e=>errors.push(e.message));
+    await page.goto(process.env.LUMI_TEST_URL || 'http://127.0.0.1:3000');
+    await page.getByRole('button',{name:'Aceito continuar'}).click();
+    await page.getByRole('button',{name:'Dúvidas frequentes',exact:true}).click();
+    await page.getByRole('textbox',{name:'Sua mensagem'}).fill('1');
+    await page.getByRole('button',{name:'Enviar mensagem'}).click();
+    await page.getByText('Exemplo: segunda a sexta', {exact:false}).waitFor();
+    await page.getByRole('button',{name:'Falar com atendente',exact:true}).click();
+    await page.getByText('Bot pausado', {exact:true}).waitFor();
+    const botCount = await page.locator('.message.bot').count();
+    await page.getByRole('textbox',{name:'Sua mensagem'}).fill('Olá');
+    await page.getByRole('button',{name:'Enviar mensagem'}).click();
+    assert.equal(await page.locator('.message.bot').count(), botCount);
+    await page.getByRole('button',{name:'Devolver ao bot'}).click();
+    await page.getByRole('button',{name:'Aceito continuar'}).waitFor();
+    await page.getByRole('button',{name:'Reiniciar',exact:false}).click();
+    await page.getByRole('button',{name:'Não aceito',exact:true}).click();
+    await page.getByText('Encerrada',{exact:true}).waitFor();
+    assert.equal(await page.getByRole('textbox',{name:'Sua mensagem'}).isDisabled(),true);
+    await page.getByRole('button',{name:'Reiniciar',exact:false}).click();
+    await page.getByRole('button',{name:'Aceito continuar'}).click();
+    await page.getByRole('button',{name:'Orçamento de lentes',exact:true}).click();
+    await page.getByRole('textbox',{name:'Sua mensagem'}).fill('1');
+    await page.getByRole('button',{name:'Enviar mensagem'}).click();
+    await page.getByRole('textbox',{name:'Sua mensagem'}).fill('1,2');
+    await page.getByRole('button',{name:'Enviar mensagem'}).click();
+    await page.locator('.quoteSummary').waitFor();
+    assert.match(await page.locator('.quoteSummary').innerText(),/280,00/);
+    assert.equal(await page.getByRole('button',{name:'Salvar orçamento de teste',exact:true}).count(),0);
+    await page.setViewportSize({width:390,height:844});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth),true);
+    assert.deepEqual(errors,[]);
+    console.log('Browser OK: consentimento, FAQ, humano, devolução, recusa, reinício e mobile; sem erros de JavaScript.');
+  } finally {await browser.close();}
+});

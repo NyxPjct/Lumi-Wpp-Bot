@@ -1,0 +1,81 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {randomUUID,randomBytes} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import {createClient} from '@supabase/supabase-js';
+const root=fileURLToPath(new URL('../../',import.meta.url));
+const exec=promisify(execFile);
+
+test('orçamentos reais: preços atômicos, recálculo, idempotência, permissões e RLS', async () => {
+  const {stdout}=await exec(path.join(root,'node_modules/.bin/supabase'),['status','-o','json'],{cwd:root,env:{...process.env,SUPABASE_HOME:path.join(root,'.local/supabase-home')}});
+  const config=JSON.parse(stdout);
+  assert.ok(['127.0.0.1','localhost'].includes(new URL(config.API_URL).hostname));
+  const options={auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}};
+  const client=()=>createClient(config.API_URL,config.ANON_KEY,options);
+  const admin=createClient(config.API_URL,config.SERVICE_ROLE_KEY,options);
+  const users=[];const optics=[];
+  async function account() {
+    const db=client();
+    const {data,error}=await db.auth.signUp({email:`quote-${randomUUID()}@example.test`,password:randomBytes(24).toString('base64url')});
+    assert.equal(error,null);users.push(data.user.id);
+    const created=await db.rpc('create_optic',{p_name:'Ótica teste orçamento',p_address:'Rua Teste, 120',p_hours:'Das 9h às 18h',p_payments:'Pix e débito',p_delivery:'Confirmar com atendente'});
+    assert.equal(created.error,null);optics.push(created.data);
+    return {db,id:created.data,userId:data.user.id};
+  }
+  const lenses=[{kind:'single',minimum_cents:10000,maximum_cents:20000},{kind:'multifocal',minimum_cents:30000,maximum_cents:50000},{kind:'occupational',minimum_cents:20000,maximum_cents:40000}];
+  const treatments=[{kind:'antireflective',minimum_cents:1000,maximum_cents:2000},{kind:'blue_filter',minimum_cents:1500,maximum_cents:2500},{kind:'photochromic',minimum_cents:5000,maximum_cents:10000}];
+  const priceArgs=id=>({p_optic_id:id,p_lenses:lenses,p_treatments:treatments});
+  const quoteArgs=(id,request=randomUUID())=>({p_optic_id:id,p_request_id:request,p_lens_type:'single',p_treatments:['blue_filter','antireflective']});
+  try {
+    const a=await account();const b=await account();
+    assert.ok((await a.db.rpc('create_quote',quoteArgs(a.id))).error,'Sem tabela não pode inventar valores');
+    assert.equal((await a.db.from('quotes').select('id')).data.length,0);
+    assert.equal((await a.db.rpc('set_price_table',priceArgs(a.id))).error,null);
+    assert.equal((await b.db.rpc('set_price_table',priceArgs(b.id))).error,null);
+    assert.deepEqual((await a.db.from('lens_prices').select('kind').eq('optic_id',b.id)).data,[]);
+    assert.ok((await a.db.rpc('set_price_table',priceArgs(b.id))).error);
+    assert.ok((await a.db.from('lens_prices').insert({optic_id:a.id,kind:'single',minimum_cents:0,maximum_cents:1})).error);
+    const invalid={...priceArgs(a.id),p_lenses:lenses.map((row,i)=>({...row,minimum_cents:i===0?999:row.minimum_cents})),p_treatments:treatments.map((row,i)=>i===2?{...row,maximum_cents:1}:row)};
+    assert.ok((await a.db.rpc('set_price_table',invalid)).error,'Tabela inválida deve falhar por completo');
+    assert.equal((await a.db.from('lens_prices').select('minimum_cents').eq('kind','single').single()).data.minimum_cents,10000,'Nenhuma atualização parcial deve persistir');
+    assert.ok((await a.db.rpc('set_price_table',{...priceArgs(a.id),p_lenses:lenses.slice(0,2)})).error);
+    assert.ok((await a.db.rpc('set_price_table',{...priceArgs(a.id),p_lenses:[lenses[0],lenses[0],lenses[2]]})).error);
+    const args=quoteArgs(a.id);
+    const attempts=await Promise.all([a.db.rpc('create_quote',args),a.db.rpc('create_quote',args)]);
+    attempts.forEach(result=>assert.equal(result.error,null));
+    const quote=attempts[0].data;
+    assert.equal(quote.id,attempts[1].data.id,'Reenvios simultâneos não podem duplicar o orçamento');
+    assert.equal(quote.minimum_cents,12500);assert.equal(quote.maximum_cents,24500);assert.equal(quote.is_demo,true);
+    assert.equal((await a.db.from('quotes').select('id').eq('request_id',args.p_request_id)).data.length,1);
+    assert.deepEqual((await b.db.from('quotes').select('id').eq('id',quote.id)).data,[]);
+    assert.deepEqual((await b.db.from('quotes').update({status:'won'}).eq('id',quote.id).select('id')).data,[]);
+    assert.ok((await b.db.rpc('create_quote',quoteArgs(a.id))).error);
+    assert.ok((await a.db.from('quotes').update({minimum_cents:1}).eq('id',quote.id)).error,'Navegador não pode adulterar o valor salvo');
+    assert.ok((await a.db.from('quotes').update({is_demo:false}).eq('id',quote.id)).error);
+    assert.ok((await a.db.from('quotes').insert({optic_id:a.id})).error);
+    assert.ok((await a.db.from('quotes').delete().eq('id',quote.id)).error);
+    const changedLenses=lenses.map(row=>({...row,minimum_cents:row.minimum_cents+1000,maximum_cents:row.maximum_cents+1000}));
+    assert.equal((await a.db.rpc('set_price_table',{...priceArgs(a.id),p_lenses:changedLenses})).error,null);
+    const retry=await a.db.rpc('create_quote',{...args,p_treatments:['antireflective','blue_filter']});
+    assert.equal(retry.error,null);assert.equal(retry.data.minimum_cents,12500,'Retry preserva a faixa original');
+    const next=await a.db.rpc('create_quote',quoteArgs(a.id));
+    assert.equal(next.error,null);assert.equal(next.data.minimum_cents,13500,'Novo orçamento usa tabela atualizada');
+    assert.ok((await a.db.rpc('create_quote',{...args,p_treatments:[]})).error,'Uma chave de reenvio não pode representar outro pedido');
+    for (const selected of [['antireflective','antireflective'],['unknown'],[null],null]) assert.ok((await a.db.rpc('create_quote',{...quoteArgs(a.id),p_treatments:selected})).error);
+    const updated=await a.db.from('quotes').update({status:'in_service'}).eq('id',quote.id).select('status').single();
+    assert.equal(updated.error,null);assert.equal(updated.data.status,'in_service');
+    assert.ok((await a.db.from('quotes').update({status:'invalid'}).eq('id',quote.id)).error);
+    assert.equal((await admin.from('optic_memberships').update({role:'attendant'}).eq('user_id',a.userId)).error,null);
+    assert.ok((await a.db.rpc('set_price_table',priceArgs(a.id))).error,'Atendente não pode editar preços');
+    assert.equal((await a.db.from('quotes').update({status:'won'}).eq('id',quote.id).select('status').single()).error,null,'Atendente pode acompanhar orçamento');
+    assert.ok((await client().from('quotes').select('id')).error);
+    assert.ok((await client().rpc('create_quote',quoteArgs(a.id))).error);
+    assert.ok((await client().rpc('set_price_table',priceArgs(a.id))).error);
+  } finally {
+    if(optics.length) assert.equal((await admin.from('optics').delete().in('id',optics)).error,null);
+    for(const id of users) assert.equal((await admin.auth.admin.deleteUser(id)).error,null);
+  }
+});

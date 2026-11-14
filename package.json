@@ -1,0 +1,37 @@
+{
+  "name": "lumi",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace=@lumi/painel",
+    "dev:api": "npm run dev --workspace=@lumi/api",
+    "build": "npm run build --workspace=@lumi/painel",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test apps/api/tests/*.test.ts packages/shared/tests/*.test.ts scripts/tests/*.test.cjs",
+    "test:e2e": "node --test apps/painel/tests/auth.test.cjs apps/painel/tests/quotes.test.cjs",
+    "db:start": "node scripts/local-supabase.mjs start",
+    "db:stop": "node scripts/local-supabase.mjs stop",
+    "db:configure": "node scripts/local-supabase.mjs configure",
+    "test:db": "node --test supabase/tests/*.test.mjs",
+    "test:e2e:demo": "node --test apps/painel/tests/onboarding.test.cjs apps/painel/tests/simulator.test.cjs",
+    "dev:demo": "NEXT_PUBLIC_LUMI_MODE=demo npm run dev",
+    "db:migrate": "node scripts/local-supabase.mjs migrate",
+    "test:db:restart": "node --test supabase/tests/restart.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "playwright-core": "^1.65.1",
+    "supabase": "^3.1.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
