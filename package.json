@@ -20,7 +20,7 @@
     "db:stop": "node scripts/local-supabase.mjs stop",
     "db:configure": "node scripts/local-supabase.mjs configure",
     "test:db": "node --test supabase/tests/*.test.mjs",
-    "test:e2e:demo": "node --test apps/painel/tests/onboarding.test.cjs apps/painel/tests/simulator.test.cjs apps/painel/tests/catalogs-demo.test.cjs",
+    "test:e2e:demo": "node --test apps/painel/tests/onboarding.test.cjs apps/painel/tests/simulator.test.cjs apps/painel/tests/catalogs-demo.test.cjs apps/painel/tests/theme.test.cjs",
     "dev:demo": "NEXT_PUBLIC_LUMI_MODE=demo npm run dev",
     "db:migrate": "node scripts/local-supabase.mjs migrate",
     "test:db:restart": "node --test supabase/tests/restart.mjs",

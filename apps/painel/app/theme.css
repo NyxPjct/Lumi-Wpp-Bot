@@ -1,0 +1,99 @@
+:root {
+  color-scheme: light;
+  --page: #f8fbfa;
+  --surface: #ffffff;
+  --surface-muted: #f4f9f6;
+  --surface-tint: #edf8f2;
+  --surface-hover: #f1faf5;
+  --field: #ffffff;
+  --ink: #173c30;
+  --muted: #687d74;
+  --green: #087f5b;
+  --border: #e5ede9;
+  --accent-solid: #087f5b;
+  --accent-hover: #076747;
+  --on-accent: #ffffff;
+  --accent-strong: #076343;
+  --accent-soft: #e7f5ed;
+  --brand-muted: #b7ddc9;
+  --chat-outgoing: #dff3e7;
+  --success-bg: #eaf7ef;
+  --success-text: #24764d;
+  --success-border: #cce8d7;
+  --warning-bg: #fff6f0;
+  --warning-text: #8e5537;
+  --warning-border: #f0dccd;
+  --info-bg: #edf5f9;
+  --info-text: #54778a;
+  --danger: #a24c3c;
+  --focus: #93c4ae;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #0d1713;
+  --surface: #15231c;
+  --surface-muted: #101e18;
+  --surface-tint: #193328;
+  --surface-hover: #203d30;
+  --field: #101e17;
+  --ink: #e3f0e7;
+  --muted: #a1b5a7;
+  --green: #74d9ae;
+  --border: #2c4436;
+  --accent-solid: #36b581;
+  --accent-hover: #52c997;
+  --on-accent: #082117;
+  --accent-strong: #94e7bd;
+  --accent-soft: #1d3e2d;
+  --brand-muted: #305b44;
+  --chat-outgoing: #204733;
+  --success-bg: #173b29;
+  --success-text: #94e7b5;
+  --success-border: #315b41;
+  --warning-bg: #38291c;
+  --warning-text: #f0c28e;
+  --warning-border: #6c5034;
+  --info-bg: #1d303a;
+  --info-text: #abcfe8;
+  --danger: #ffb7a8;
+  --focus: #76d5ad;
+}
+
+/* Buttons use a solid accent; links use the brighter text accent in dark mode. */
+.primaryButton, .logoSymbol, .avatar, .steps .current > span, form button {
+  background: var(--accent-solid);
+  color: var(--on-accent);
+}
+.primaryButton {border-color: var(--accent-solid)}
+.primaryButton:hover:enabled {background: var(--accent-hover);border-color: var(--accent-hover)}
+.secondaryButton {background: var(--surface);color: var(--green)}
+.textButton, .reset {background: transparent}
+.accountTabs button {background: transparent}
+.accountTabs .selected {background: var(--accent-soft)}
+.dangerButton {background: var(--surface);color: var(--danger);border-color: var(--danger)}
+input, select, .field textarea {background: var(--field);color: var(--ink)}
+.field textarea[aria-invalid='true'], input[aria-invalid='true'] {border-color: var(--danger)}
+.message > span {color: var(--ink)}
+.headerActions {display:flex;align-items:center;gap:12px;flex-shrink:0}
+.headerActions .badge {white-space:nowrap}
+.themeToggle {
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:38px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;
+  background:var(--surface);color:var(--ink);font-size:11px;line-height:1.4;
+}
+.themeToggle:hover {background:var(--surface-hover);border-color:var(--green)}
+.themeToggle svg {width:17px;height:17px;flex-shrink:0}
+.breadcrumb {min-width:0;margin-right:15px}
+.breadcrumb strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.breadcrumbRoot {flex-shrink:0}
+:root {accent-color:var(--accent-solid)}
+::selection {background:var(--chat-outgoing);color:var(--ink)}
+@media(max-width:650px) {
+  .themeToggle {width:38px;height:38px;padding:9px}
+  .themeToggle > span {display:none}
+  .headerActions {gap:8px}
+  .breadcrumbRoot {display:none}
+  .breadcrumb > svg {flex-shrink:0}
+}
+@media(max-width:500px) {.headerActions .badge {display:none}}

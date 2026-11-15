@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import {useDemoSettings} from './demo-settings';
 import {Clover} from './clover';
+import {ThemeToggle} from './theme-toggle';
 
 export function AppShell({children}: {children: React.ReactNode}) {
   const path = usePathname();
@@ -27,7 +28,7 @@ export function AppShell({children}: {children: React.ReactNode}) {
       <div className="asideBottom"><Clover/><strong>Um pouco de sorte.<br/>Muito cuidado.</strong><p>Mais leveza para a sua ótica,<br/>mais atenção a cada cliente.</p><span className="live"/> Lumi · Feita para óticas</div>
     </aside>
     <main>
-      <header><span className="breadcrumb"><Clover/>Painel <span className="slash">/</span> <strong>{title}</strong></span><span className="badge"><span className="live"/>{mode === 'supabase' ? 'Ambiente local' : 'Demonstração'}</span></header>
+      <header><span className="breadcrumb"><Clover/><span className="breadcrumbRoot">Painel <span className="slash">/</span></span><strong>{title}</strong></span><div className="headerActions"><ThemeToggle/><span className="badge"><span className="live"/>{mode === 'supabase' ? 'Ambiente local' : 'Demonstração'}</span></div></header>
       <nav className="mobileNav" aria-label="Navegação móvel"><Link href="/">Simulador</Link><Link href="/tabelas">Tabelas</Link><Link href="/orcamentos">Orçamentos</Link><Link href="/agenda">Agenda</Link><Link href="/pedidos">Pedidos</Link><Link href="/configuracao">Configurar minha ótica</Link><Link href="/conta">Conta</Link></nav>
       {storageWarning && <p className="notice" role="status">{storageWarning}{mode === 'supabase' && user && <button className="textButton" onClick={() => {void reload().catch(() => {});}}>Tentar carregar novamente</button>}</p>}
       {children}

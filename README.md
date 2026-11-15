@@ -14,7 +14,7 @@ Atendimento pelo WhatsApp para óticas. Cada ótica conectará seu próprio núm
 - Agendamento pelo simulador: consulta de vagas reais, confirmação, cancelamento e remarcação das reservas da sessão de teste.
 - Pedidos de teste: cadastro, produção, pronto para retirar, retirada e consulta de código/status no simulador.
 - Rascunho de aviso de óculos prontos bloqueado para envio, sem mensagens reais.
-- Painel responsivo verde e branco com trevo de quatro folhas: simulador, consentimento demonstrativo, menu, FAQ personalizada e transferência para humano.
+- Painel responsivo com temas claro e escuro em verde, trevo de quatro folhas, simulador, consentimento demonstrativo, menu, FAQ personalizada e transferência para humano.
 - Esqueleto do webhook com assinatura HMAC, verificação Meta e filtro de números autorizados.
 - Modo de demonstração independente do banco, disponível com `npm run dev:demo`.
 
@@ -31,6 +31,8 @@ Para ver a Lumi no seu próprio computador, com Node.js 22 ou mais recente:
 Ele usa uma porta livre entre 3010 e 3020, preservando outros aplicativos. Mantenha a janela aberta. Este modo oferece interface, configuração, FAQ, importação de tabelas e orçamento de demonstração; **pedidos e agenda com persistência exigem Docker + Supabase local**. As tabelas importadas na demonstração ficam somente naquela aba. Não é uma publicação do aplicativo na internet.
 
 Veja o [guia de acesso e demonstração no Windows](docs/testar-no-windows.md). Em um terminal, após `npm ci`, o mesmo iniciador pode ser usado com `npm run demo`.
+
+O botão de sol/lua no canto superior direito alterna entre **modo claro e escuro**, inclusive no celular. Na primeira abertura, o tema acompanha o sistema. A escolha manual fica no navegador e é aplicada antes da primeira pintura da página, preservada ao navegar/recarregar e sincronizada entre abas. Se o armazenamento estiver bloqueado, a alternância continua funcionando na sessão atual.
 
 ## Desenvolvimento com Supabase local
 
