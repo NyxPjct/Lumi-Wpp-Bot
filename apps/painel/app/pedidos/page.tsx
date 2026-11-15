@@ -1,4 +1,5 @@
 'use client';
+import {Clover} from '../../components/clover';
 import Link from 'next/link';
 import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {normalizeOrderCode,validTestName,orderStatuses,orderStatusLabels,type OrderStatus} from '@lumi/shared';
@@ -61,7 +62,7 @@ export default function OrdersPage(){
   if(!opticId)return <section className="completion"><h1>Configure sua ótica primeiro.</h1><Link href="/configuracao" className="primaryButton">Configurar minha ótica →</Link></section>;
   const rows=loaded.scope===scope?loaded.rows:[];const visible=rows.filter(row=>filter==='all'||row.status===filter);
   return <>
-    <section className="heading"><div><p className="eyebrow">DO LABORATÓRIO AO NOVO OLHAR</p><h1>Cada pedido,<br/>no seu tempo.</h1><p>Acompanhe a produção e registre quando os óculos estiverem prontos.</p></div><div className="brandMark" aria-hidden="true">✳</div></section>
+    <section className="heading"><div><p className="eyebrow">DO LABORATÓRIO AO NOVO OLHAR</p><h1>Cada pedido,<br/>no seu tempo.</h1><p>Acompanhe a produção e registre quando os óculos estiverem prontos.</p></div><div className="brandMark" aria-hidden="true"><Clover/></div></section>
     <p className="notice">Pedidos de teste · Use somente nomes fictícios. Marcar como pronto gera um rascunho de aviso bloqueado para envio. Nenhuma mensagem é enviada pelo WhatsApp.</p>
     {message&&<p className="notice" role="status">{message}</p>}
     {(error||loaded.error)&&<p className="formMessage" role="alert">{error||loaded.error}<button className="textButton" onClick={()=>{setError('');setRevision(value=>value+1);}}>Recarregar pedidos</button></p>}

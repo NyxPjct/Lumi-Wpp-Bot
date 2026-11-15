@@ -26,6 +26,14 @@
 
 O Supabase será configurado em uma etapa posterior, com o proprietário do projeto. A implementação de autenticação, banco, RLS e Storage pode ser preparada no repositório; a conexão real depende do projeto e dos acessos disponibilizados com segurança. O ambiente de desenvolvimento usa Supabase local com Docker, sem criar projeto hospedado nem consumir a cota free. Autenticação e configurações da ótica são a primeira etapa integrada; os demais módulos deste documento seguem como planejamento.
 
+### Tabelas e identidade visual
+
+- Cada ótica escolhe as marcas, cadastra seus preços de venda e importa suas próprias tabelas Excel ou CSV: Zeiss, Hoya, Varilux, lentes próprias e outras.
+- O painel deve permitir consultar a versão publicada, ver sua vigência e última atualização e substituir o arquivo. Não há sincronização automática com fabricantes.
+- O orçamento deve consultar produtos e preços vigentes publicados pela própria ótica, preservando a origem e sem inventar valores ou duplicar tratamentos já incluídos.
+- A identidade da Lumi usa verde e branco, com interface limpa e profissional e um trevo de quatro folhas como símbolo.
+- A implementação atual desses pontos e suas limitações estão no [guia de tabelas](tabelas-de-precos.md). Os demais itens deste documento continuam como visão do produto; o [README](../README.md) informa o que já foi implementado.
+
 ### Problema
 Óticas recebem as mesmas perguntas o dia todo (preço de lente, prazo, convênios, horário) e demoram para responder, principalmente em horário de pico e fora do expediente. Cliente que espera vai para a concorrente.
 

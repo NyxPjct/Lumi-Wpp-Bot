@@ -1,10 +1,12 @@
 # Preços e orçamentos de teste
 
-A Lumi estima uma faixa para o **par de lentes** com base nas preferências coletadas. Não interpreta receita, não recomenda tratamentos e não confirma um valor final. Esta etapa ainda não recebe arquivos e não envia mensagens ao WhatsApp.
+A Lumi estima o valor para o **par de lentes** com base nos dados publicados pela ótica. Não interpreta receita, não recomenda tratamentos e não confirma um valor final. Não envia mensagens ao WhatsApp.
+
+**Tabelas de produtos:** agora é possível importar Excel e CSV em **Tabelas de preços**. Depois da primeira importação, os novos orçamentos usam exclusivamente produtos vigentes dessas tabelas. Veja [o guia de tabelas](tabelas-de-precos.md) para publicação, validade, atualização e orçamento com origem preservada. O restante deste documento descreve as faixas gerais anteriores, disponíveis em `/precos` enquanto não houver tabela importada.
 
 ## Configurar preços
 
-No modo Supabase local, entre na conta e configure a ótica antes de abrir **Tabela de preços**. A tabela começa vazia; não há valores automáticos para uma ótica real.
+No modo Supabase local, entre na conta e configure a ótica antes de abrir **Tabelas de preços → Faixas gerais de preços**. As faixas começam vazias; não há valores automáticos para uma ótica real.
 
 Preencha todas as seis faixas:
 

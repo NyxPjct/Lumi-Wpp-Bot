@@ -3,16 +3,21 @@ export * from './orders';
 import {startAgenda,transitionAgenda,type ConversationAgenda,type AgendaFlow,type AgendaCommand} from './agenda-flow';
 export * from './agenda-flow';
 import {lensTypes, treatmentTypes, lensLabels, treatmentLabels, estimateQuote, formatRange, type PriceTable, type LensType, type QuoteEstimate} from './pricing';
+import {startCatalogQuote,transitionCatalog,type CatalogFlow} from './catalog-flow';
+import type {PriceCatalog} from './catalogs';
 export * from './pricing';
+export * from './catalogs';
+export * from './price-import';
 import {faqForSettings, type BusinessSettings} from './business';
 export * from './business';
-export type State = 'privacidade' | 'menu' | 'faq' | 'quote_lens' | 'quote_treatments' | 'agenda' | 'order_code' | 'order_pending' | 'order_retry' | 'humano' | 'encerrado';
+export type State = 'privacidade' | 'menu' | 'faq' | 'quote_lens' | 'quote_treatments' | 'quote_catalog' | 'agenda' | 'order_code' | 'order_pending' | 'order_retry' | 'humano' | 'encerrado';
 export interface Conversation {
   state: State;
   consentedAt?: string;
   invalidAttempts: number;
   quoteLens?: LensType;
   quoteResult?: QuoteEstimate;
+  catalogFlow?: CatalogFlow;
   agenda?: AgendaFlow;
   orderCode?: string;
 }
@@ -27,7 +32,7 @@ export const faq = [
 export const welcomeForSettings = (settings?: BusinessSettings | null) => settings
   ? `Olá! Sou a Lumi, assistente da ${settings.name}. Para continuar, você autoriza o uso dos seus dados para este atendimento? Responda “aceito” ou “não aceito”. Não envie receitas nesta demonstração.`
   : welcome;
-export function transition(current: Conversation, input: string, now = new Date().toISOString(), settings?: BusinessSettings | null, prices?: PriceTable, agenda?:ConversationAgenda,orders?:OrdersAvailability): {conversation: Conversation; replies: string[]; agendaCommand?:AgendaCommand; orderLookup?:OrderLookup} {
+export function transition(current: Conversation, input: string, now = new Date().toISOString(), settings?: BusinessSettings | null, prices?: PriceTable, agenda?:ConversationAgenda,orders?:OrdersAvailability,catalogs?:PriceCatalog[]|null): {conversation: Conversation; replies: string[]; agendaCommand?:AgendaCommand; orderLookup?:OrderLookup} {
   const conversation = {...current};
   const answers = settings ? faqForSettings(settings) : faq;
   const text = input.trim().toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -44,7 +49,15 @@ export function transition(current: Conversation, input: string, now = new Date(
     if (['nao', 'nao aceito'].includes(text)) {conversation.state = 'encerrado'; return respond('Tudo bem. O atendimento automático foi encerrado. Entre em contato diretamente com a ótica para atendimento humano.');}
     return respond(welcomeForSettings(settings));
   }
-  if (text === 'menu' || text === 'voltar') {conversation.state = 'menu'; conversation.invalidAttempts = 0; delete conversation.quoteLens; delete conversation.quoteResult; delete conversation.agenda; delete conversation.orderCode; return respond(menu);}
+  if (text === 'menu' || text === 'voltar') {conversation.state = 'menu'; conversation.invalidAttempts = 0; delete conversation.quoteLens; delete conversation.quoteResult; delete conversation.catalogFlow; delete conversation.agenda; delete conversation.orderCode; return respond(menu);}
+  if(conversation.state==='quote_catalog'&&conversation.quoteLens&&conversation.catalogFlow){
+    const result=transitionCatalog(conversation.catalogFlow,input,catalogs??null,conversation.quoteLens,now);
+    conversation.catalogFlow=result.flow;
+    if(result.valid)conversation.invalidAttempts=0;else if(++conversation.invalidAttempts>=3)return handoff();
+    if(result.estimate){conversation.quoteResult=result.estimate;conversation.state='humano';}
+    else if(result.unavailable)conversation.state='humano';
+    return respond(result.reply);
+  }
   if (conversation.state.startsWith('order_')) {
     if(text==='0'){conversation.state='menu';delete conversation.orderCode;conversation.invalidAttempts=0;return respond(menu);}
     if(conversation.state==='order_pending')return respond('Aguarde a consulta do pedido.');
@@ -66,10 +79,19 @@ export function transition(current: Conversation, input: string, now = new Date(
   if (conversation.state === 'quote_lens') {
     if (/^[1-3]$/.test(text)) {
       conversation.quoteLens = lensTypes[Number(text) - 1];
+      if(catalogs===null||catalogs?.length){
+        const result=startCatalogQuote(catalogs,conversation.quoteLens,now);
+        conversation.state=result.unavailable?'humano':'quote_catalog';conversation.invalidAttempts=0;conversation.catalogFlow=result.flow;
+        return respond(result.reply);
+      }
       conversation.state = 'quote_treatments'; conversation.invalidAttempts = 0;
       return respond('Quais tratamentos deseja? Digite os números separados por vírgula, ou 0 para nenhum.\n' + treatmentTypes.map((key, i) => `${i + 1}. ${treatmentLabels[key]}`).join('\n') + '\nOs adicionais são somados ao valor do par de lentes.');
     }
   } else if (conversation.state === 'quote_treatments') {
+    if(catalogs===null||catalogs?.length){
+      conversation.state='humano';delete conversation.quoteResult;
+      return respond('As tabelas da ótica mudaram durante o atendimento. Volte ao menu e solicite um novo orçamento pelos produtos atuais. A Lumi está pausada.');
+    }
     if (text === '0' || /^[1-3](?:\s*[,;]\s*[1-3])*$/.test(text)) {
       const selected = text === '0' ? [] : text.split(/[,;]/).map(item => treatmentTypes[Number(item.trim()) - 1]);
       if (new Set(selected).size === selected.length && conversation.quoteLens) {

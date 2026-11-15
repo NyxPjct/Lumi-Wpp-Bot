@@ -1,4 +1,5 @@
 'use client';
+import {Clover} from '../../components/clover';
 import Link from 'next/link';
 import {useEffect, useState, type FormEvent} from 'react';
 import {lensTypes, treatmentTypes, lensLabels, treatmentLabels, parseMoney, emptyPriceTable, completePriceTable, type PriceTable} from '@lumi/shared';
@@ -49,7 +50,8 @@ export default function PricesPage() {
   if (mode === 'supabase' && !user) return <section className="completion"><h1>Entre para configurar os preços.</h1><Link className="primaryButton" href="/conta">Entrar ou criar conta →</Link></section>;
   if (mode === 'supabase' && !opticId) return <section className="completion"><h1>Primeiro, configure sua ótica.</h1><p>Os preços ficarão vinculados à sua ótica.</p><Link className="primaryButton" href="/configuracao">Configurar minha ótica →</Link></section>;
   return <>
-    <section className="heading"><div><p className="eyebrow">CLAREZA DESDE O PRIMEIRO VALOR</p><h1>Uma estimativa<br/>com a sua tabela.</h1><p>Defina faixas em reais para o par de lentes e os adicionais de tratamento.</p></div><div className="brandMark" aria-hidden="true">✳</div></section>
+    <section className="heading"><div><p className="eyebrow">CLAREZA DESDE O PRIMEIRO VALOR</p><h1>Uma estimativa<br/>com a sua tabela.</h1><p>Defina faixas em reais para o par de lentes e os adicionais de tratamento.</p></div><div className="brandMark" aria-hidden="true"><Clover/></div></section>
+    <div className="setupBanner"><div><strong>Trabalha com tabelas de marcas e produtos?</strong><p>Importe Excel ou CSV em Tabelas. Estas faixas gerais só são usadas enquanto não houver uma tabela importada.</p></div><Link href="/tabelas">Gerenciar tabelas →</Link></div>
     <p className="notice">{mode === 'demo' ? 'Valores fictícios de demonstração, salvos somente nesta aba.' : 'Nenhum preço é preenchido automaticamente. Cadastre os valores da sua ótica.'} Os adicionais selecionados são somados à faixa base. Armação não incluída. A confirmação final é do atendente.</p>
     {error && <p className="formMessage" role="alert">{error}<button className="textButton" onClick={reload}>Tentar carregar preços novamente</button></p>}
     <form className="priceForm configCard" onSubmit={submit} noValidate>

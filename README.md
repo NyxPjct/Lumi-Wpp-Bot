@@ -7,13 +7,14 @@ Atendimento pelo WhatsApp para óticas. Cada ótica conectará seu próprio núm
 - Cadastro, login e logout com Supabase Auth local.
 - Onboarding da ótica e configurações persistidas em PostgreSQL.
 - RLS para isolar as configurações de cada ótica; criação transacional da ótica e do vínculo com o proprietário.
-- Tabela de preços editável, cálculo de orçamento por tipo de lente e tratamentos, com valores em centavos.
+- Tabelas de preços por marca: importação Excel (.xlsx) e CSV, mapeamento de colunas, conferência, vigência, consulta e substituição de versões.
+- Orçamentos consultam produtos e preços das tabelas vigentes, com marca, tratamentos incluídos e origem preservada; faixas gerais continuam disponíveis antes da primeira importação.
 - Lista de orçamentos de teste persistidos, filtro por status e atualização do acompanhamento.
 - Agenda do painel: criar e retirar horários, reservar, cancelar e remarcar agendamentos de teste.
 - Agendamento pelo simulador: consulta de vagas reais, confirmação, cancelamento e remarcação das reservas da sessão de teste.
 - Pedidos de teste: cadastro, produção, pronto para retirar, retirada e consulta de código/status no simulador.
 - Rascunho de aviso de óculos prontos bloqueado para envio, sem mensagens reais.
-- Painel responsivo com simulador: consentimento demonstrativo, menu, FAQ personalizada e transferência para humano.
+- Painel responsivo verde e branco com trevo de quatro folhas: simulador, consentimento demonstrativo, menu, FAQ personalizada e transferência para humano.
 - Esqueleto do webhook com assinatura HMAC, verificação Meta e filtro de números autorizados.
 - Modo de demonstração independente do banco, disponível com `npm run dev:demo`.
 
@@ -27,7 +28,7 @@ Para ver a Lumi no seu próprio computador, com Node.js 22 ou mais recente:
 2. Abra a pasta `Lumi-Wpp-Bot-main` e dê dois cliques em **Abrir-Lumi-Demo.cmd**.
 3. Aguarde a instalação das dependências na primeira execução. O iniciador abre o navegador quando confirma que a Lumi está respondendo.
 
-Ele usa uma porta livre entre 3010 e 3020, preservando outros aplicativos. Mantenha a janela aberta. Este modo oferece interface, configuração, FAQ e orçamento de demonstração; **pedidos e agenda com persistência exigem Docker + Supabase local**. Não é uma publicação do aplicativo na internet.
+Ele usa uma porta livre entre 3010 e 3020, preservando outros aplicativos. Mantenha a janela aberta. Este modo oferece interface, configuração, FAQ, importação de tabelas e orçamento de demonstração; **pedidos e agenda com persistência exigem Docker + Supabase local**. As tabelas importadas na demonstração ficam somente naquela aba. Não é uma publicação do aplicativo na internet.
 
 Veja o [guia de acesso e demonstração no Windows](docs/testar-no-windows.md). Em um terminal, após `npm ci`, o mesmo iniciador pode ser usado com `npm run demo`.
 
@@ -71,7 +72,9 @@ O [documento de produto](docs/produto.md) descreve o destino do projeto, não as
 
 ## Orçamentos de lentes
 
-Abra **Tabela de preços**, cadastre as faixas e teste a opção 1 do simulador. Salve o orçamento de teste e acompanhe seu status em **Orçamentos**. O valor final precisa de confirmação humana. Veja [o guia de preços e orçamentos](docs/orcamentos.md) para cálculo, limitações e testes.
+Abra **Tabelas de preços → Importar tabela**, escolha Excel ou CSV, confira os campos, declare o preço por lente/par e publique. Cada ótica usa as marcas e preços de venda que escolher, incluindo Zeiss, Hoya, Varilux e lentes próprias. A atualização é feita pela ótica ao substituir o arquivo, sem sincronização com fornecedores. Veja [o guia de importação e consulta](docs/tabelas-de-precos.md).
+
+Teste a opção 1 do simulador: tipo → tabela → produto. O preço vem do produto importado, com os tratamentos descritos já incluídos. Tabelas vencidas ou futuras ficam fora dos novos orçamentos. No modo com banco, salve o orçamento e acompanhe em **Orçamentos**; o histórico preserva valores e origem. O valor final precisa de confirmação humana. As [faixas gerais anteriores](docs/orcamentos.md) só são usadas enquanto não houver tabela importada.
 
 ## Validação automática
 

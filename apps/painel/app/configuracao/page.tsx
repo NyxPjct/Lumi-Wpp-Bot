@@ -1,4 +1,5 @@
 'use client';
+import {Clover} from '../../components/clover';
 
 import Link from 'next/link';
 import {useEffect, useRef, useState, type FormEvent} from 'react';
@@ -77,7 +78,7 @@ export default function Configuration() {
   if (ready && mode === 'supabase' && !user) return <section className="completion"><p className="eyebrow">CONFIGURAÇÃO DA ÓTICA</p><h1>Comece pela sua conta.</h1><p>Entre ou cadastre-se para salvar os dados da sua ótica no Supabase local.</p><Link className="primaryButton" href="/conta">Entrar ou criar conta →</Link></section>;
 
   return <>
-    <section className="heading configHeading"><div><p className="eyebrow">SUA ÓTICA, DO SEU JEITO</p><h1>Prepare o primeiro<br/>“olá” da Lumi.</h1><p>Personalize o atendimento e conheça a etapa de conexão do WhatsApp.</p></div><div className="brandMark" aria-hidden="true">✳</div></section>
+    <section className="heading configHeading"><div><p className="eyebrow">SUA ÓTICA, DO SEU JEITO</p><h1>Prepare o primeiro<br/>“olá” da Lumi.</h1><p>Personalize o atendimento e conheça a etapa de conexão do WhatsApp.</p></div><div className="brandMark" aria-hidden="true"><Clover/></div></section>
     <p className="notice">{mode === 'demo' ? 'Demonstração: use dados fictícios. A configuração fica somente nesta aba do navegador. Esta etapa não cria uma conta.' : 'Supabase local: a configuração será salva na sua conta. O WhatsApp continua desconectado; use dados de teste.'}</p>
     {message && <p className="formMessage" role="alert">{message}</p>}
     {!ready ? <p role="status">Carregando configuração…</p> : complete ? <section className="completion" aria-labelledby="complete-title">

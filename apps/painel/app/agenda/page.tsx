@@ -1,4 +1,5 @@
 'use client';
+import {Clover} from '../../components/clover';
 import Link from 'next/link';
 import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {serviceTypes,serviceLabels,slotDurations,formatSlotTime,parseBrasiliaTime,validTestName,type ServiceType} from '@lumi/shared';
@@ -82,7 +83,7 @@ export default function AgendaPage(){
   const disabled=busy||loading||loaded.scope!==scope||Boolean(loaded.error);
   const optionLabel=(slot:AgendaData['slots'][number])=>`${formatSlotTime(slot.starts_at)} · ${serviceLabels[slot.service]} · ${slot.duration_minutes} min`;
   return <>
-    <section className="heading"><div><p className="eyebrow">CADA ENCONTRO, UM CUIDADO</p><h1>Um horário certo<br/>para cada atendimento.</h1><p>Organize exames, ajustes e retiradas em uma agenda por ótica.</p></div><div className="brandMark" aria-hidden="true">✳</div></section>
+    <section className="heading"><div><p className="eyebrow">CADA ENCONTRO, UM CUIDADO</p><h1>Um horário certo<br/>para cada atendimento.</h1><p>Organize exames, ajustes e retiradas em uma agenda por ótica.</p></div><div className="brandMark" aria-hidden="true"><Clover/></div></section>
     <p className="notice">Agenda de teste · Todos os horários são de Brasília. Use somente nomes fictícios. Não há lembretes, envio de mensagens ou agendamento pelo WhatsApp nesta etapa.</p>
     {message&&<p className="notice" role="status">{message}</p>}
     {(error||loaded.error)&&<p className="formMessage" role="alert">{error||loaded.error}<button className="textButton" onClick={()=>{setError('');setRevision(value=>value+1);}}>Recarregar agenda</button></p>}

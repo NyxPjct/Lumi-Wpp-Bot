@@ -21,6 +21,7 @@ A configuração e as respostas de demonstração ficam apenas nesta aba do nave
 - Configuração da ótica e perguntas frequentes.
 - Simulador de conversa e consentimento de demonstração.
 - Tabela de preços fictícia e cálculo do orçamento.
+- Importação Excel (.xlsx) e CSV em **Tabelas de preços**, com consulta dos produtos e uso no orçamento. Use arquivos fictícios: as tabelas ficam somente nesta aba. Veja [o guia de tabelas](tabelas-de-precos.md).
 
 **Sem Docker, a agenda e os pedidos persistidos continuam indisponíveis.** O modo demo não cria reservas, não consulta pedidos reais e não envia mensagens ao WhatsApp. A conta Supabase também não é necessária para essa demonstração.
 

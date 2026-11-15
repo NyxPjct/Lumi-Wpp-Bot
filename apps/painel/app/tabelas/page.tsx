@@ -1,0 +1,44 @@
+'use client';
+import Link from 'next/link';
+import {useEffect,useState} from 'react';
+import {catalogStatus,formatRange,lensLabels,normalizeCell,type PriceCatalog} from '@lumi/shared';
+import {useDemoSettings} from '../../components/demo-settings';
+import {useCatalogs} from '../../components/catalog-provider';
+import {CatalogImport} from '../../components/catalog-import';
+import {Clover} from '../../components/clover';
+const date=(value:string)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'UTC',dateStyle:'short'}).format(new Date(value));
+const updated=(value:string)=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',dateStyle:'short',timeStyle:'short'}).format(new Date(value));
+const statusLabels={active:'Vigente',scheduled:'Programada',expired:'Vencida'};
+export default function CatalogsPage(){
+  const {mode,user,opticId,ready:settingsReady}=useDemoSettings();
+  const {tables,ready,error,refresh,canEdit}=useCatalogs();
+  const [importing,setImporting]=useState(false);const [replacing,setReplacing]=useState<PriceCatalog|undefined>();
+  const [selected,setSelected]=useState<string|null>(null);const [search,setSearch]=useState('');
+  const [filter,setFilter]=useState('all');const [productSearch,setProductSearch]=useState('');const [productPage,setProductPage]=useState(0);const [message,setMessage]=useState('');
+  useEffect(()=>{setImporting(false);setReplacing(undefined);setSelected(null);setMessage('');},[mode,user?.id,opticId]);
+  useEffect(()=>{setProductPage(0);},[productSearch,selected]);
+  if(!settingsReady||!ready)return <p className="notice" role="status">Carregando tabelas…</p>;
+  if(mode==='supabase'&&!user)return <section className="completion"><h1>Entre para gerenciar suas tabelas.</h1><Link href="/conta" className="primaryButton">Entrar ou criar conta →</Link></section>;
+  if(mode==='supabase'&&!opticId)return <section className="completion"><h1>Primeiro, configure sua ótica.</h1><Link href="/configuracao" className="primaryButton">Configurar minha ótica →</Link></section>;
+  const active=tables.filter(table=>catalogStatus(table)==='active');
+  const visible=tables.filter(table=>(filter==='all'||catalogStatus(table)===filter)&&normalizeCell(`${table.name} ${table.brand}`).includes(normalizeCell(search)));
+  const detail=tables.find(table=>table.id===selected);
+  const products=detail?.products.filter(item=>normalizeCell(`${item.name} ${item.code} ${item.treatments} ${item.refractiveIndex}`).includes(normalizeCell(productSearch)))??[];
+  return <>
+    <section className="heading catalogHeading"><div><p className="eyebrow">PREÇOS COM A SUA IDENTIDADE</p><h1>Suas tabelas.<br/><span>Seus preços.</span></h1><p>Zeiss, Hoya, Varilux, lentes próprias e as marcas que fazem parte da sua ótica.</p></div><div className="brandMark"><Clover/></div></section>
+    {mode==='demo'&&<p className="notice demoNotice">Demonstração: use arquivos de teste. As tabelas ficam somente nesta aba e já podem ser consultadas no simulador.</p>}
+    {error&&<p className="formMessage" role="alert">{error}<button className="textButton" onClick={()=>void refresh().catch(()=>{})}>Recarregar tabelas</button></p>}
+    {message&&<p className="importSuccess" role="status">{message}</p>}
+    <div className="catalogMetrics"><div><span>Tabelas cadastradas</span><strong>{tables.length.toString().padStart(2,'0')}</strong></div><div><span>Tabelas vigentes</span><strong>{active.length.toString().padStart(2,'0')}<i className="metricDot"/></strong></div><div><span>Produtos para orçamento</span><strong>{active.reduce((count,table)=>count+table.products.length,0)}</strong></div><div className="metricHint"><Clover/><p>Os preços vêm da sua ótica.<br/>A Lumi cuida da consulta.</p></div></div>
+    {importing?<CatalogImport key={replacing?.id??'new'} existing={replacing} onClose={()=>{setImporting(false);setReplacing(undefined);}} onPublished={()=>{setImporting(false);setReplacing(undefined);setMessage(mode==='demo'?'Tabela publicada nesta aba. Teste os produtos no simulador.':'Tabela publicada. Os novos orçamentos já usam os preços vigentes.');}}/>:<>
+      <div className="catalogToolbar"><div><h2>Biblioteca de tabelas</h2><p>Organize suas marcas e mantenha os valores em dia.</p></div><div className="toolbarActions"><button className="secondaryButton" onClick={()=>void refresh().catch(()=>{})}>↻ Atualizar lista</button><button className="primaryButton" disabled={!canEdit||Boolean(error)} onClick={()=>{setMessage('');setReplacing(undefined);setImporting(true);}}>＋ Importar tabela</button></div></div>
+      {!canEdit&&!error&&<p className="note">Somente o proprietário pode importar ou substituir tabelas.</p>}
+      <div className="catalogFilters"><div className="filterPills" aria-label="Filtrar tabelas">{[['all','Todas'],['active','Vigentes'],['scheduled','Programadas'],['expired','Vencidas']].map(([value,label])=><button key={value} aria-pressed={filter===value} className={filter===value?'selected':''} onClick={()=>setFilter(value)}>{label}</button>)}</div><input aria-label="Buscar tabela ou marca" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Buscar tabela ou marca…"/></div>
+      {visible.length?<div className="catalogGrid">{visible.map(table=>{const status=catalogStatus(table);return <article className={`catalogCard ${selected===table.id?'catalogSelected':''}`} key={table.id}>
+        <div className="catalogCardTop"><span className="brandTile">{table.brand.slice(0,2).toLocaleUpperCase('pt-BR')}</span><span className={`catalogStatus ${status}`}><i/>{statusLabels[status]}</span></div><p className="catalogBrand">{table.brand}</p><h3>{table.name}</h3><p>{table.products.length} produtos · Valores pelo par</p><div className="catalogDates"><span>Vigência</span><strong>{date(table.validFrom)}{table.validUntil?` a ${date(table.validUntil)}`:' · sem data final'}</strong><span>Última atualização · Brasília</span><strong>{updated(table.updatedAt)}</strong></div><div className="catalogCardActions"><button className="textButton" onClick={()=>{setSelected(selected===table.id?null:table.id);setProductSearch('');}}>{selected===table.id?'Fechar produtos':'Consultar produtos'} →</button><button className="textButton" disabled={!canEdit||Boolean(error)} aria-label={`Atualizar tabela ${table.name}`} onClick={()=>{setMessage('');setReplacing(table);setImporting(true);}}>Substituir arquivo</button></div>
+      </article>;})}</div>:<section className="emptyState catalogEmpty"><Clover/><h2>{tables.length?'Nenhuma tabela para este filtro.':'O próximo orçamento começa com a sua tabela.'}</h2><p>{tables.length?'Busque outra marca ou escolha outro filtro.':'Importe seu Excel ou CSV, confira os preços e deixe a Lumi encontrar os produtos durante o atendimento.'}</p>{!tables.length&&<a href="/modelo-tabela-lumi.csv" className="secondaryButton" download>Baixar modelo CSV</a>}</section>}
+      {detail&&<section className="configCard catalogDetail"><div className="panelTitle"><div><p className="eyebrow">{detail.brand}</p><h2>{detail.name}</h2><p>Arquivo: {detail.sourceFile}</p></div><button className="secondaryButton" onClick={()=>setSelected(null)}>Fechar produtos</button></div><div className="detailSearch"><input aria-label="Buscar produto na tabela" value={productSearch} onChange={event=>setProductSearch(event.target.value)} placeholder="Buscar por produto, código, índice ou tratamento…"/></div><div className="tableScroll" tabIndex={0} aria-label="Produtos da tabela"><table className="productTable"><caption>{products.length} produtos encontrados · {statusLabels[catalogStatus(detail)]}</caption><thead><tr><th>Produto / código</th><th>Tipo de lente</th><th>Tratamentos incluídos</th><th>Preço pelo par</th></tr></thead><tbody>{products.slice(productPage*25,(productPage+1)*25).map(item=><tr key={item.code}><td><strong>{item.name}</strong><small>{item.code}{item.refractiveIndex?` · Índice ${item.refractiveIndex}`:''}</small>{item.notes&&<small>{item.notes}</small>}</td><td>{lensLabels[item.lensType]}</td><td>{item.treatments||'Não informado'}</td><td>{formatRange(item)}</td></tr>)}</tbody></table></div>{products.length>25&&<div className="pagination"><button className="secondaryButton" disabled={productPage===0} onClick={()=>setProductPage(page=>page-1)}>Anterior</button><span>Página {productPage+1} de {Math.ceil(products.length/25)}</span><button className="secondaryButton" disabled={(productPage+1)*25>=products.length} onClick={()=>setProductPage(page=>page+1)}>Próxima</button></div>}</section>}
+    </>}
+    <div className="catalogFootnote"><p>A Lumi consulta somente as tabelas vigentes publicadas por você. A atualização dos preços das marcas é feita pela ótica ao substituir o arquivo.</p><Link href="/">Testar orçamento →</Link><Link href="/precos">Faixas gerais de preços →</Link></div>
+  </>;
+}

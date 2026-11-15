@@ -1,4 +1,5 @@
 'use client';
+import {Clover} from '../../components/clover';
 
 import Link from 'next/link';
 import {useState, type FormEvent} from 'react';
@@ -34,7 +35,7 @@ export default function AccountPage() {
   }
 
   return <>
-    <section className="heading"><div><p className="eyebrow">SEU ESPAÇO NA LUMI</p><h1>Uma conta.<br/>Sua ótica conectada.</h1><p>Cadastre-se para salvar o atendimento da sua ótica no Supabase local.</p></div><div className="brandMark" aria-hidden="true">✳</div></section>
+    <section className="heading"><div><p className="eyebrow">SEU ESPAÇO NA LUMI</p><h1>Uma conta.<br/>Sua ótica conectada.</h1><p>Cadastre-se para salvar o atendimento da sua ótica no Supabase local.</p></div><div className="brandMark" aria-hidden="true"><Clover/></div></section>
     <p className="notice">Ambiente de desenvolvimento local. Use e-mails e senhas de teste. Nenhum e-mail real é enviado e o WhatsApp ainda não está conectado.</p>
     {message && <p className="formMessage" role="alert">{message}</p>}
     {!ready ? <p role="status">Verificando sessão…</p> : user ? <section className="completion">

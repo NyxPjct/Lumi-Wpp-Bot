@@ -9,7 +9,7 @@ export interface PriceTable {
   lenses: Partial<Record<LensType, PriceRange>>;
   treatments: Partial<Record<Treatment, PriceRange>>;
 }
-export interface QuoteEstimate extends PriceRange {lensType: LensType; treatments: Treatment[]}
+export interface QuoteEstimate extends PriceRange {lensType: LensType; treatments: Treatment[]; source?: import('./catalogs').CatalogQuoteSource}
 export const maxPriceCents = 100_000_000;
 export const emptyPriceTable = (): PriceTable => ({lenses: {}, treatments: {}});
 export const demoPriceTable: PriceTable = {
@@ -17,7 +17,7 @@ export const demoPriceTable: PriceTable = {
   treatments: {antireflective:{minimumCents:5000,maximumCents:12000}, blue_filter:{minimumCents:8000,maximumCents:18000}, photochromic:{minimumCents:15000,maximumCents:35000}},
 };
 export const formatMoney = (cents: number) => new Intl.NumberFormat('pt-BR', {style:'currency',currency:'BRL'}).format(cents / 100);
-export const formatRange = (range: PriceRange) => `${formatMoney(range.minimumCents)} a ${formatMoney(range.maximumCents)}`;
+export const formatRange = (range: PriceRange) => range.minimumCents===range.maximumCents?formatMoney(range.minimumCents):`${formatMoney(range.minimumCents)} a ${formatMoney(range.maximumCents)}`;
 export function validRange(input: unknown): input is PriceRange {
   if (!input || typeof input !== 'object') return false;
   const value = input as PriceRange;
